@@ -3,7 +3,7 @@
 
 #include "CodeDependencies.iss"
 
-#define AppVersion "2.0.0"
+#define AppVersion "2.1.0"
 
 [Setup]
 ; Unique application identifier used by Windows for installation tracking.
@@ -13,9 +13,9 @@ AppId={{782DD1AF-DB60-48D7-8787-0838B581E16F}}
 AppName=OLED Sleeper
 UninstallDisplayName=OLED Sleeper
 AppVersion={#AppVersion}
-AppPublisher=Quorthon13
-AppPublisherURL=https://github.com/Quorthon13/OLED-Sleeper
-AppSupportURL=https://github.com/Quorthon13/OLED-Sleeper/issues
+AppPublisher=ShyanInc
+AppPublisherURL=https://github.com/ShyanInc/OLED-Sleeper
+AppSupportURL=https://github.com/ShyanInc/OLED-Sleeper/issues
 
 ; Installation runs without elevation.
 PrivilegesRequired=lowest

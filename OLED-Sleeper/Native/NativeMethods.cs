@@ -342,6 +342,41 @@ namespace OLED_Sleeper.Native
 
         #endregion DDC/CI (Monitor Brightness)
 
+        #region Power Management
+
+        /// <summary>
+        /// Sets or retrieves power information.
+        /// Used here to query the system execution state to detect if any application
+        /// has requested the display to stay on (e.g., media players via ES_DISPLAY_REQUIRED).
+        /// </summary>
+        /// <param name="informationLevel">The power information level requested.</param>
+        /// <param name="lpInputBuffer">Optional input buffer (null for queries).</param>
+        /// <param name="nInputBufferSize">Size of the input buffer in bytes.</param>
+        /// <param name="lpOutputBuffer">Output buffer to receive the requested information.</param>
+        /// <param name="nOutputBufferSize">Size of the output buffer in bytes.</param>
+        /// <returns>STATUS_SUCCESS (0) if the function succeeds.</returns>
+        /// <seealso href="https://learn.microsoft.com/en-us/windows/win32/api/powerbase/nf-powerbase-callntpowerinformation"/>
+        [DllImport("powrprof.dll")]
+        public static extern uint CallNtPowerInformation(
+            int informationLevel,
+            IntPtr lpInputBuffer,
+            uint nInputBufferSize,
+            out uint lpOutputBuffer,
+            uint nOutputBufferSize);
+
+        /// <summary>
+        /// Information level for <see cref="CallNtPowerInformation"/> to query the current system execution state.
+        /// </summary>
+        public const int SystemExecutionState = 16;
+
+        /// <summary>
+        /// Indicates that an application has requested the display to remain on
+        /// (e.g., a media player preventing the monitor from turning off).
+        /// </summary>
+        public const uint ES_DISPLAY_REQUIRED = 0x00000002;
+
+        #endregion Power Management
+
         #region Process Memory Management
 
         /// <summary>

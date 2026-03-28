@@ -1,0 +1,37 @@
+name: Build and Release Installer
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    name: Build installer and create release
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Publish x64
+        run: dotnet publish OLED-Sleeper/OLED-Sleeper.csproj -c Release -r win-x64 --self-contained false -o installer/publish-x64
+
+      - name: Publish x86
+        run: dotnet publish OLED-Sleeper/OLED-Sleeper.csproj -c Release -r win-x86 --self-contained false -o installer/publish-x86
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y --no-progress
+
+      - name: Compile installer
+        run: iscc installer/OLED-Sleeper.iss
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: installer/InstallerOutput/*.exe
+          generate_release_notes: true

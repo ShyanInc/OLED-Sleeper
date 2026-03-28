@@ -254,11 +254,16 @@ namespace OLED_Sleeper.Features.MonitorIdleDetection.Services
         }
 
         /// <summary>
-        /// Checks if system input should be considered activity for the monitor.
+        /// Checks if system input or a display-required execution state should be considered activity for the monitor.
+        /// When an application has called SetThreadExecutionState(ES_DISPLAY_REQUIRED), such as a media player,
+        /// this treats the monitor as active to prevent blanking — matching Windows native sleep behavior.
         /// </summary>
         private static bool IsSystemInputActive(ManagedMonitorState monitor, SystemState state)
         {
-            return monitor.Settings.IsActiveOnInput && state.IdleTimeMilliseconds < monitor.Settings.IdleTimeMilliseconds;
+            if (!monitor.Settings.IsActiveOnInput)
+                return false;
+
+            return state.IdleTimeMilliseconds < monitor.Settings.IdleTimeMilliseconds || state.IsDisplayRequired;
         }
 
         /// <summary>
@@ -296,7 +301,8 @@ namespace OLED_Sleeper.Features.MonitorIdleDetection.Services
             Point cursorPosition = new(nativePoint.X, nativePoint.Y);
             nint foregroundWindowHandle = NativeMethods.GetForegroundWindow();
             Rect windowRect = GetForegroundWindowRect(foregroundWindowHandle);
-            return new SystemState(idleTime, cursorPosition, windowRect, foregroundWindowHandle);
+            bool displayRequired = IsDisplayRequiredActive();
+            return new SystemState(idleTime, cursorPosition, windowRect, foregroundWindowHandle, displayRequired);
         }
 
         /// <summary>
@@ -315,6 +321,19 @@ namespace OLED_Sleeper.Features.MonitorIdleDetection.Services
                 NativeMethods.GetWindowRect(foregroundWindowHandle, out nativeWindowRect);
                 return nativeWindowRect.ToWindowsRect();
             }
+        }
+
+        /// <summary>
+        /// Queries the system execution state to determine if any application has requested the display to stay on.
+        /// </summary>
+        /// <returns>True if ES_DISPLAY_REQUIRED is set in the current execution state.</returns>
+        private static bool IsDisplayRequiredActive()
+        {
+            uint status = NativeMethods.CallNtPowerInformation(
+                NativeMethods.SystemExecutionState,
+                IntPtr.Zero, 0,
+                out uint executionState, sizeof(uint));
+            return status == 0 && (executionState & NativeMethods.ES_DISPLAY_REQUIRED) != 0;
         }
 
         /// <summary>
@@ -373,13 +392,15 @@ namespace OLED_Sleeper.Features.MonitorIdleDetection.Services
             public readonly Point CursorPosition;
             public readonly Rect ForegroundWindowRect;
             public readonly nint ForegroundWindowHandle;
+            public readonly bool IsDisplayRequired;
 
-            public SystemState(uint idleTime, Point cursorPosition, Rect windowRect, nint windowHandle)
+            public SystemState(uint idleTime, Point cursorPosition, Rect windowRect, nint windowHandle, bool isDisplayRequired)
             {
                 IdleTimeMilliseconds = idleTime;
                 CursorPosition = cursorPosition;
                 ForegroundWindowRect = windowRect;
                 ForegroundWindowHandle = windowHandle;
+                IsDisplayRequired = isDisplayRequired;
             }
         }
     }
